@@ -81,6 +81,12 @@ class MockHttpClient extends _i1.Mock implements _i3.HttpClient {
           as _i2.MultipartRequest Function(_i3.HttpMethod, String));
 
   @override
+  set authToken(String? token) => super.noSuchMethod(
+    Invocation.setter(#authToken, token),
+    returnValueForMissingStub: null,
+  );
+
+  @override
   _i4.Future<_i3.HttpResponse> get(String? url) =>
       (super.noSuchMethod(
             Invocation.method(#get, [url]),
