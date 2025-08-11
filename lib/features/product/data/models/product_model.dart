@@ -14,7 +14,7 @@ class ProductModel extends Product {
       id: json['id'],
       name: json['name'],
       description: json['description'],
-      price: json['price'],
+      price: double.parse("${json['price']}"),
       imageUrl: json['imageUrl'],
     );
   }
