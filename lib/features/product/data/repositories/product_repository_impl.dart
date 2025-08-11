@@ -15,9 +15,9 @@ class ProductRepositoryImpl extends ProductRepository {
   final NetworkInfo _networkInfo;
 
   ProductRepositoryImpl({
-    required networkInfo,
-    required remoteDataSource,
-    required localDataSource,
+    required NetworkInfo networkInfo,
+    required ProductRemoteDataSource remoteDataSource,
+    required ProductLocalDataSource localDataSource,
   })  : _networkInfo = networkInfo,
         _productRemoteDataSource = remoteDataSource,
         _productLocalDataSource = localDataSource;
