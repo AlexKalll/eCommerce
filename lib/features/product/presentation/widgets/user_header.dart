@@ -1,9 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
+
+import '../../../../core/error/failure.dart';
+import '../../../../core/presentation/routes/app_routes.dart';
+import '../../../../core/presentation/widgets/snackbar.dart';
+import '../../../auth/presentation/bloc/auth_bloc.dart';
 
 class UserHeader extends StatelessWidget {
-  final String userName;
-
-  const UserHeader({super.key, required this.userName});
+  const UserHeader({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -27,6 +32,25 @@ class UserHeader extends StatelessWidget {
                     Radius.circular(8),
                   ),
                 ),
+                child: BlocListener<AuthBloc, AuthState>(
+                  listener: (context, state) {
+                    if (state is AuthLogoutSuccess) {
+                      context.push(Routes.login);
+                    } else if (state is AuthFailure) {
+                      showError(context, 'Unable to logout. Please try again.');
+                    }
+                  },
+                  child: IconButton(
+                    onPressed: () {
+                      context.read<AuthBloc>().add(AuthLogoutRequested());
+                    },
+                    icon: const Icon(
+                      Icons.logout,
+                      size: 30,
+                      color: Colors.black54,
+                    ),
+                  ),
+                ),
               ),
 
               const SizedBox(width: 10),
@@ -45,11 +69,24 @@ class UserHeader extends StatelessWidget {
                           style: TextStyle(
                             fontSize: 18,
                           )),
-                      Text('$userName!',
-                          style: const TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                          )),
+                      BlocBuilder<AuthBloc, AuthState>(
+                          builder: (context, state) {
+                        if (state is AuthLoadSuccess) {
+                          return Text(
+                            state.user.name,
+                            style: const TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          );
+                        } else {
+                          return const Text('',
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                              ));
+                        }
+                      }),
                     ],
                   )
                 ],
@@ -59,7 +96,9 @@ class UserHeader extends StatelessWidget {
 
           // Notification
           IconButton(
-            onPressed: () {},
+            onPressed: () {
+              context.push(Routes.chats);
+            },
             icon: Icon(
               Icons.notifications_active,
               size: 30,

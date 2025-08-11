@@ -26,7 +26,7 @@ class HomePage extends StatelessWidget {
             child: Column(
               children: [
                 // Header
-                const UserHeader(userName: 'John'),
+                const UserHeader(),
                 const SizedBox(height: 20),
 
                 // Title

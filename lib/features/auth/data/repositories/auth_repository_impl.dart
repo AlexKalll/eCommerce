@@ -50,6 +50,8 @@ class AuthRepositoryImpl implements AuthRepository {
         return Right(authenticatedUser);
       } on ServerException {
         return const Left(ServerFailure('Unable to login'));
+      } on AuthenticationException catch (e) {
+        return Left(AuthFailure(e.message));
       }
     } else {
       return const Left(NetworkFailure());
