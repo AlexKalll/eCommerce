@@ -36,6 +36,11 @@ class _FakeStreamedResponse_1 extends _i1.SmartFake
     : super(parent, parentInvocation);
 }
 
+class _FakeUri_2 extends _i1.SmartFake implements Uri {
+  _FakeUri_2(Object parent, Invocation parentInvocation)
+    : super(parent, parentInvocation);
+}
+
 /// A class which mocks [Client].
 ///
 /// See the documentation for Mockito's code generation for more information.
@@ -216,4 +221,132 @@ class MockClient extends _i1.Mock implements _i2.Client {
     Invocation.method(#close, []),
     returnValueForMissingStub: null,
   );
+}
+
+/// A class which mocks [MultipartRequest].
+///
+/// See the documentation for Mockito's code generation for more information.
+class MockMultipartRequest extends _i1.Mock implements _i2.MultipartRequest {
+  MockMultipartRequest() {
+    _i1.throwOnMissingStub(this);
+  }
+
+  @override
+  Map<String, String> get fields =>
+      (super.noSuchMethod(
+            Invocation.getter(#fields),
+            returnValue: <String, String>{},
+          )
+          as Map<String, String>);
+
+  @override
+  List<_i2.MultipartFile> get files =>
+      (super.noSuchMethod(
+            Invocation.getter(#files),
+            returnValue: <_i2.MultipartFile>[],
+          )
+          as List<_i2.MultipartFile>);
+
+  @override
+  int get contentLength =>
+      (super.noSuchMethod(Invocation.getter(#contentLength), returnValue: 0)
+          as int);
+
+  @override
+  set contentLength(int? value) => super.noSuchMethod(
+    Invocation.setter(#contentLength, value),
+    returnValueForMissingStub: null,
+  );
+
+  @override
+  String get method =>
+      (super.noSuchMethod(
+            Invocation.getter(#method),
+            returnValue: _i5.dummyValue<String>(
+              this,
+              Invocation.getter(#method),
+            ),
+          )
+          as String);
+
+  @override
+  Uri get url =>
+      (super.noSuchMethod(
+            Invocation.getter(#url),
+            returnValue: _FakeUri_2(this, Invocation.getter(#url)),
+          )
+          as Uri);
+
+  @override
+  Map<String, String> get headers =>
+      (super.noSuchMethod(
+            Invocation.getter(#headers),
+            returnValue: <String, String>{},
+          )
+          as Map<String, String>);
+
+  @override
+  bool get persistentConnection =>
+      (super.noSuchMethod(
+            Invocation.getter(#persistentConnection),
+            returnValue: false,
+          )
+          as bool);
+
+  @override
+  bool get followRedirects =>
+      (super.noSuchMethod(
+            Invocation.getter(#followRedirects),
+            returnValue: false,
+          )
+          as bool);
+
+  @override
+  int get maxRedirects =>
+      (super.noSuchMethod(Invocation.getter(#maxRedirects), returnValue: 0)
+          as int);
+
+  @override
+  bool get finalized =>
+      (super.noSuchMethod(Invocation.getter(#finalized), returnValue: false)
+          as bool);
+
+  @override
+  set persistentConnection(bool? value) => super.noSuchMethod(
+    Invocation.setter(#persistentConnection, value),
+    returnValueForMissingStub: null,
+  );
+
+  @override
+  set followRedirects(bool? value) => super.noSuchMethod(
+    Invocation.setter(#followRedirects, value),
+    returnValueForMissingStub: null,
+  );
+
+  @override
+  set maxRedirects(int? value) => super.noSuchMethod(
+    Invocation.setter(#maxRedirects, value),
+    returnValueForMissingStub: null,
+  );
+
+  @override
+  _i2.ByteStream finalize() =>
+      (super.noSuchMethod(
+            Invocation.method(#finalize, []),
+            returnValue: _i5.dummyValue<_i2.ByteStream>(
+              this,
+              Invocation.method(#finalize, []),
+            ),
+          )
+          as _i2.ByteStream);
+
+  @override
+  _i3.Future<_i2.StreamedResponse> send() =>
+      (super.noSuchMethod(
+            Invocation.method(#send, []),
+            returnValue: _i3.Future<_i2.StreamedResponse>.value(
+              _FakeStreamedResponse_1(this, Invocation.method(#send, [])),
+            ),
+          )
+          as _i3.Future<_i2.StreamedResponse>);
 }

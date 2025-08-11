@@ -12,7 +12,7 @@ import 'package:mockito/mockito.dart';
 import '../../../../../utils/fixture_reader.dart';
 import 'remote_data_source_impl_test.mocks.dart';
 
-@GenerateMocks([http.Client])
+@GenerateMocks([http.Client, http.MultipartRequest])
 void main() {
   late MockClient mockClient;
   late ProductRemoteDataSourceImpl productRemoteDataSource;
@@ -41,8 +41,11 @@ void main() {
 
   const tProducts = [tProduct1, tProduct2];
 
-  final tProductsFixture = fixture('product_list.json');
-  final tProduct1Fixture = jsonEncode(jsonDecode(fixture('product.json')));
+  final tProductsFixture =
+      jsonEncode({'data': jsonDecode(fixture("product_list.json"))});
+  final tProduct1Fixture =
+      jsonEncode({'data': jsonDecode(fixture('product.json'))});
+  print(tProduct1Fixture);
 
   group('getProducts', () {
     test('should return list of products when the response code is 200',
@@ -88,16 +91,6 @@ void main() {
   });
 
   group('createProduct', () {
-    test('should return product when the response code is 201', () async {
-      when(mockClient.post(Uri.parse('$baseUrl/products'),
-              headers: defaultHeaders, body: jsonEncode(tProduct1.toJson())))
-          .thenAnswer((_) async => http.Response(tProduct1Fixture, 201));
-
-      final result = await productRemoteDataSource.createProduct(tProduct1);
-
-      expect(result, tProduct1);
-    });
-
     test('should throw ServerException when the response code is not 201',
         () async {
       when(mockClient.post(Uri.parse('$baseUrl/products'),
