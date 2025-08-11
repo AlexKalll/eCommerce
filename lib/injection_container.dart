@@ -5,6 +5,17 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'core/network/http.dart';
 import 'core/network/network_info.dart';
+import 'features/auth/data/datasources/local/auth_local_data_source.dart';
+import 'features/auth/data/datasources/local/auth_local_data_source_impl.dart';
+import 'features/auth/data/datasources/remote/auth_remote_data_source.dart';
+import 'features/auth/data/datasources/remote/auth_remote_data_source_impl.dart';
+import 'features/auth/data/repositories/auth_repository_impl.dart';
+import 'features/auth/domain/repositories/auth_repository.dart';
+import 'features/auth/domain/usecases/get_current_user.dart';
+import 'features/auth/domain/usecases/login.dart';
+import 'features/auth/domain/usecases/logout.dart';
+import 'features/auth/domain/usecases/register.dart';
+import 'features/auth/presentation/bloc/auth_bloc.dart';
 import 'features/product/data/data_sources/local/local_data_source.dart';
 import 'features/product/data/data_sources/local/local_data_source_impl.dart';
 import 'features/product/data/data_sources/remote/remote_data_source.dart';
@@ -48,6 +59,35 @@ Future<void> init() async {
       () => ProductLocalDataSourceImpl(sharedPreferences: serviceLocator()));
   serviceLocator.registerLazySingleton<ProductRemoteDataSource>(
       () => ProductRemoteDataSourceImpl(client: serviceLocator()));
+
+  //! Features
+  //! Feature_#2 (Auth) -----------------------------------------------------
+
+  // Bloc
+  serviceLocator.registerFactory(() => AuthBloc(
+      login: serviceLocator(),
+      register: serviceLocator(),
+      logout: serviceLocator(),
+      getCurrentUser: serviceLocator()));
+
+  // Use cases
+  serviceLocator.registerLazySingleton(() => Login(serviceLocator()));
+  serviceLocator.registerLazySingleton(() => Register(serviceLocator()));
+  serviceLocator.registerLazySingleton(() => Logout(serviceLocator()));
+  serviceLocator.registerLazySingleton(() => GetCurrentUser(serviceLocator()));
+
+  // Repository
+  serviceLocator.registerLazySingleton<AuthRepository>(() => AuthRepositoryImpl(
+      client: serviceLocator(),
+      remoteDataSource: serviceLocator(),
+      localDataSource: serviceLocator(),
+      networkInfo: serviceLocator()));
+
+  // Data
+  serviceLocator.registerLazySingleton<AuthLocalDataSource>(
+      () => AuthLocalDataSourceImpl(sharedPreferences: serviceLocator()));
+  serviceLocator.registerLazySingleton<AuthRemoteDataSource>(
+      () => AuthRemoteDataSourceImpl(client: serviceLocator()));
 
   //! Core ---------------------------------------------------------------------
   serviceLocator.registerLazySingleton<NetworkInfo>(

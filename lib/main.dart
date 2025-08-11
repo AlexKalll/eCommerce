@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import 'bloc_observer.dart';
 import 'core/presentation/routes/router.dart';
+import 'features/auth/presentation/bloc/auth_bloc.dart';
 import 'features/product/presentation/bloc/product/product_bloc.dart';
 import 'injection_container.dart' as di;
 
@@ -21,9 +22,17 @@ class App extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider<ProductsBloc>(
-      create: (context) =>
-          di.serviceLocator<ProductsBloc>()..add(ProductsLoadRequested()),
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider<ProductsBloc>(
+          create: (context) =>
+              di.serviceLocator<ProductsBloc>()..add(ProductsLoadRequested()),
+        ),
+        BlocProvider(
+          create: (context) =>
+              di.serviceLocator<AuthBloc>()..add(const AuthLoadRequested()),
+        ),
+      ],
       child: MaterialApp.router(
         title: 'Products',
         theme: ThemeData(

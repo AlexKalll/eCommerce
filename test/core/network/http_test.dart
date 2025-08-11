@@ -29,7 +29,7 @@ void main() {
   group('get', () {
     test('should return response of client.get wrapped in HttpResponse',
         () async {
-      when(mockClient.get(Uri.parse(tUrl)))
+      when(mockClient.get(Uri.parse(tUrl), headers: anyNamed('headers')))
           .thenAnswer((_) async => http.Response('', 200));
 
       final result = await httpClient.get(tUrl);
@@ -70,7 +70,7 @@ void main() {
     test(
         'should return HttpResponse when the call to client.delete is successful',
         () async {
-      when(mockClient.delete(Uri.parse(tUrl)))
+      when(mockClient.delete(Uri.parse(tUrl), headers: anyNamed('headers')))
           .thenAnswer((_) async => http.Response('', 200));
 
       final result = await httpClient.delete(tUrl);
@@ -86,10 +86,9 @@ void main() {
       when(mockMultipartRequest.send()).thenAnswer((_) async =>
           http.StreamedResponse(Stream.fromIterable([utf8.encode('')]), 200));
 
-      final map = <String, String>{};
-
-      when(mockMultipartRequest.fields).thenReturn(map);
+      when(mockMultipartRequest.fields).thenReturn({});
       when(mockMultipartRequest.files).thenReturn([]);
+      when(mockMultipartRequest.headers).thenReturn({});
 
       final result = await httpClient.uploadFile(tUrl, HttpMethod.post, tBody, [
         const UploadFile(key: 'image', path: 'test/core/network/http_test.dart')
