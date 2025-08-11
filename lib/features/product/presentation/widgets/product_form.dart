@@ -1,12 +1,14 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/presentation/widgets/button.dart';
 import '../../../../core/presentation/widgets/image_input.dart';
 import '../../../../core/presentation/widgets/input.dart';
 import '../../../../core/presentation/widgets/snackbar.dart';
 import '../../domain/entities/product.dart';
+import '../bloc/product/product_bloc.dart';
 
 class ProductForm extends StatefulWidget {
   final Product? product;
@@ -105,21 +107,68 @@ class _ProductFormState extends State<ProductForm> {
           //
           SizedBox(
             width: double.infinity,
-            child: Button(
-              text: widget.product != null ? 'Update' : 'Add',
-              onPressed: () {
-                if (_formKey.currentState!.validate()) {
-                  if (_pickedImage == null && widget.product == null) {
-                    showError(context, 'Please select an image');
-                    return;
-                  }
-                  // Save product
+            child: BlocBuilder<ProductsBloc, ProductsState>(
+              builder: (context, state) {
+                if (state is ProductsAddInProgress) {
+                  return const Center(child: CircularProgressIndicator());
                 }
+
+                return Button(
+                  text: widget.product != null ? 'Update' : 'Add',
+                  onPressed: () {
+                    if (_formKey.currentState!.validate()) {
+                      if (_pickedImage == null && widget.product == null) {
+                        showError(context, 'Please select an image');
+                        return;
+                      }
+
+                      if (mounted) {
+                        if (widget.product != null) {
+                          _updateProduct(context);
+                        } else {
+                          _addProduct(context);
+                        }
+                      }
+                    }
+                  },
+                );
               },
             ),
           )
         ],
       ),
     );
+  }
+
+  void _updateProduct(BuildContext context) {
+    // Update
+    context.read<ProductsBloc>().add(
+          ProductsProductUpdated(
+            Product(
+              id: widget.product!.id,
+              name: _nameController.text,
+              price: double.parse(_priceController.text),
+              description: _descriptionController.text,
+              imageUrl: _pickedImage != null
+                  ? _pickedImage!.absolute.path
+                  : widget.product!.imageUrl,
+            ),
+          ),
+        );
+  }
+
+  void _addProduct(BuildContext context) {
+    // Add
+
+    context.read<ProductsBloc>().add(
+          ProductsProductAdded(
+            Product(
+                name: _nameController.text,
+                price: double.parse(_priceController.text),
+                description: _descriptionController.text,
+                imageUrl: _pickedImage!.absolute.path,
+                id: ''),
+          ),
+        );
   }
 }
