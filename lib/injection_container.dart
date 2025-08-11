@@ -3,6 +3,7 @@ import 'package:http/http.dart' as http;
 import 'package:internet_connection_checker/internet_connection_checker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'core/network/http.dart';
 import 'core/network/network_info.dart';
 import 'features/product/data/data_sources/local/local_data_source.dart';
 import 'features/product/data/data_sources/local/local_data_source_impl.dart';
@@ -57,4 +58,7 @@ Future<void> init() async {
   serviceLocator.registerLazySingleton(() => sharedPreferences);
   serviceLocator.registerLazySingleton(() => InternetConnectionChecker());
   serviceLocator.registerLazySingleton(() => http.Client());
+  serviceLocator.registerLazySingleton(() => HttpClient(
+      multipartRequestFactory: multipartRequestFactory,
+      client: serviceLocator()));
 }
