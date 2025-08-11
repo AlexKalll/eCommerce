@@ -1,15 +1,12 @@
-import 'package:equatable/equatable.dart';
+import 'user.dart';
 
-class AuthenticatedUser extends Equatable {
-  final String id;
-  final String name;
-  final String email;
+class AuthenticatedUser extends User {
   final String accessToken;
 
   const AuthenticatedUser({
-    required this.id,
-    required this.name,
-    required this.email,
+    required super.id,
+    required super.name,
+    required super.email,
     required this.accessToken,
   }) : assert(name.length >= 3);
 
