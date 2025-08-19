@@ -1,0 +1,223 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    if: github.event_name != 'push' || !startsWith(github.ref, 'refs/tags/')
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.19.0'
+          channel: 'stable'
+
+      - name: Cache dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+            ${{ env.PUB_CACHE }}
+          key: ${{ runner.os }}-deps-${{ hashFiles('**/pubspec.lock', '**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-deps-
+
+      - name: Get Flutter dependencies
+        run: flutter pub get
+
+      - name: Analyze code
+        run: flutter analyze
+
+      - name: Run tests
+        run: flutter test
+
+      - name: Upload test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-results
+          path: |
+            coverage/
+            test-results/
+
+  build-debug:
+    runs-on: ubuntu-latest
+    if: github.event_name != 'push' || !startsWith(github.ref, 'refs/tags/')
+    needs: test
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.19.0'
+          channel: 'stable'
+
+      - name: Cache dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+            ${{ env.PUB_CACHE }}
+          key: ${{ runner.os }}-deps-${{ hashFiles('**/pubspec.lock', '**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-deps-
+
+      - name: Get Flutter dependencies
+        run: flutter pub get
+
+      - name: Build Debug APK
+        run: flutter build apk --debug
+
+      - name: Upload Debug APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: debug-apk
+          path: build/app/outputs/flutter-apk/app-debug.apk
+
+  build-release:
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/')
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.19.0'
+          channel: 'stable'
+
+      - name: Cache dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+            ${{ env.PUB_CACHE }}
+          key: ${{ runner.os }}-deps-${{ hashFiles('**/pubspec.lock', '**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-deps-
+
+      - name: Get Flutter dependencies
+        run: flutter pub get
+
+      - name: Build Release APK
+        run: flutter build apk --release
+
+      - name: Build Split APKs (for smaller downloads)
+        run: flutter build apk --split-per-abi --release
+
+      - name: Upload Release APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-apk
+          path: build/app/outputs/flutter-apk/app-release.apk
+
+      - name: Upload Split APKs
+        uses: actions/upload-artifact@v4
+        with:
+          name: split-apks
+          path: build/app/outputs/flutter-apk/
+
+  release:
+    needs: build-release
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/')
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download Release APK
+        uses: actions/download-artifact@v4
+        with:
+          name: release-apk
+          path: .
+
+      - name: Download Split APKs
+        uses: actions/download-artifact@v4
+        with:
+          name: split-apks
+          path: split-apks/
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            app-release.apk
+            split-apks/app-armeabi-v7a-release.apk
+            split-apks/app-arm64-v8a-release.apk
+            split-apks/app-x86_64-release.apk
+          draft: false
+          prerelease: false
+          generate_release_notes: true
+          body: |
+            ## 📱 E-commerce App Release
+            
+            ### What's New
+            - Bug fixes and improvements
+            - Enhanced chat functionality
+            - Better user experience
+            
+            ### Installation
+            - **Full APK**: Download `app-release.apk` for all devices
+            - **Split APKs**: Download the appropriate architecture for smaller file size:
+              - `app-arm64-v8a-release.apk` (Most modern devices)
+              - `app-armeabi-v7a-release.apk` (Older ARM devices)
+              - `app-x86_64-release.apk` (Emulators and Intel devices)
+            
+            ### Features
+            - User authentication
+            - Product management
+            - Real-time chat
+            - Responsive design
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Comment on PR
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: '🚀 APK has been built and released! Check the [releases page](https://github.com/${{ github.repository }}/releases) for the latest version.'
+            }) 
