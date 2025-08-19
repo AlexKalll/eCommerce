@@ -8,8 +8,33 @@ import '../../../../core/presentation/widgets/snackbar.dart';
 import '../bloc/product/product_bloc.dart';
 import '../widgets/widgets.dart';
 
-class HomePage extends StatelessWidget {
+class HomePage extends StatefulWidget {
   const HomePage({super.key});
+
+  @override
+  State<HomePage> createState() => _HomePageState();
+}
+
+class _HomePageState extends State<HomePage> {
+  final TextEditingController _searchController = TextEditingController();
+  bool _isSearchVisible = false;
+  String _searchQuery = '';
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  void _toggleSearch() {
+    setState(() {
+      _isSearchVisible = !_isSearchVisible;
+      if (!_isSearchVisible) {
+        _searchQuery = '';
+        _searchController.clear();
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -29,22 +54,60 @@ class HomePage extends StatelessWidget {
                 const UserHeader(),
                 const SizedBox(height: 20),
 
-                // Title
+                // Title and Search
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text('Available Products',
-                        style: Theme.of(context).textTheme.titleLarge),
+                    Text(
+                      'Available Products',
+                      style: Theme.of(context).textTheme.titleLarge,
+                    ),
                     IconButton(
-                      onPressed: () {},
+                      onPressed: _toggleSearch,
                       icon: Icon(
-                        Icons.search,
-                        color: Theme.of(context).disabledColor,
+                        _isSearchVisible ? Icons.close : Icons.search,
+                        color: _isSearchVisible
+                            ? Theme.of(context).colorScheme.error
+                            : Theme.of(context).disabledColor,
                       ),
                       iconSize: 20,
                     ),
                   ],
                 ),
+
+                // Search Bar
+                if (_isSearchVisible) ...[
+                  const SizedBox(height: 10),
+                  TextField(
+                    controller: _searchController,
+                    decoration: InputDecoration(
+                      hintText: 'Search products...',
+                      prefixIcon: const Icon(Icons.search),
+                      suffixIcon: _searchQuery.isNotEmpty
+                          ? IconButton(
+                              onPressed: () {
+                                _searchController.clear();
+                                setState(() {
+                                  _searchQuery = '';
+                                });
+                              },
+                              icon: const Icon(Icons.clear),
+                            )
+                          : null,
+                      border: const OutlineInputBorder(
+                        borderRadius: BorderRadius.all(Radius.circular(10)),
+                      ),
+                      filled: true,
+                      fillColor: Colors.white,
+                    ),
+                    onChanged: (value) {
+                      setState(() {
+                        _searchQuery = value;
+                      });
+                    },
+                  ),
+                  const SizedBox(height: 10),
+                ],
 
                 // Product List
                 Expanded(
@@ -52,21 +115,28 @@ class HomePage extends StatelessWidget {
                     builder: (context, state) {
                       return RefreshIndicator(
                         onRefresh: () async {
-                          context
-                              .read<ProductsBloc>()
-                              .add(ProductsLoadRequested());
+                          context.read<ProductsBloc>().add(
+                            ProductsLoadRequested(),
+                          );
                         },
                         child: ListView.builder(
-                          itemCount: state.products.length,
+                          itemCount: _getFilteredProducts(
+                            state.products,
+                          ).length,
                           itemBuilder: (context, index) {
-                            final product = state.products[index];
+                            final product = _getFilteredProducts(
+                              state.products,
+                            )[index];
 
                             return ProductCard(
-                                product: product,
-                                onProductSelected: (product) {
-                                  context.push(Routes.productDetail,
-                                      extra: product);
-                                });
+                              product: product,
+                              onProductSelected: (product) {
+                                context.push(
+                                  Routes.productDetail,
+                                  extra: product,
+                                );
+                              },
+                            );
                           },
                         ),
                       );
@@ -87,5 +157,19 @@ class HomePage extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  List<dynamic> _getFilteredProducts(List<dynamic> products) {
+    if (_searchQuery.isEmpty) {
+      return products;
+    }
+
+    return products.where((product) {
+      final name = product.name.toString().toLowerCase();
+      final description = product.description.toString().toLowerCase();
+      final query = _searchQuery.toLowerCase();
+
+      return name.contains(query) || description.contains(query);
+    }).toList();
   }
 }

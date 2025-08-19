@@ -30,7 +30,9 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   }
 
   Future<void> _onLoadRequested(
-      AuthLoadRequested event, Emitter<AuthState> emit) async {
+    AuthLoadRequested event,
+    Emitter<AuthState> emit,
+  ) async {
     emit(const AuthLoadInProgress());
 
     final user = await getCurrentUser(NoParams());
@@ -42,38 +44,51 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   }
 
   Future<void> _onLoginRequested(
-      AuthLoginRequested event, Emitter<AuthState> emit) async {
+    AuthLoginRequested event,
+    Emitter<AuthState> emit,
+  ) async {
     emit(const AuthLoginInProgress());
 
-    final result = await login(LoginParams(event.email, event.password));
+    try {
+      final result = await login(LoginParams(event.email, event.password));
 
-    result.fold(
-      (failure) => emit(AuthLoginFailure(failure.message)),
-      (user) {
+      result.fold((failure) => emit(AuthLoginFailure(failure.message)), (user) {
         emit(AuthLoginSuccess(user));
         emit(AuthLoadSuccess(user));
-      },
-    );
+      });
+    } catch (e) {
+      emit(AuthLoginFailure('An unexpected error occurred. Please try again.'));
+    }
   }
 
   Future<void> _onRegisterRequested(
-      AuthRegisterRequested event, Emitter<AuthState> emit) async {
+    AuthRegisterRequested event,
+    Emitter<AuthState> emit,
+  ) async {
     emit(const AuthRegisterInProgress());
 
-    final result =
-        await register(RegisterParams(event.name, event.email, event.password));
+    try {
+      final result = await register(
+        RegisterParams(event.name, event.email, event.password),
+      );
 
-    result.fold(
-      (failure) => emit(AuthRegisterFailure(failure.message)),
-      (user) {
+      result.fold((failure) => emit(AuthRegisterFailure(failure.message)), (
+        user,
+      ) {
         emit(AuthRegisterSuccess(user));
         emit(AuthLoadSuccess(user));
-      },
-    );
+      });
+    } catch (e) {
+      emit(
+        AuthRegisterFailure('An unexpected error occurred. Please try again.'),
+      );
+    }
   }
 
   Future<void> _onLogoutRequested(
-      AuthLogoutRequested event, Emitter<AuthState> emit) async {
+    AuthLogoutRequested event,
+    Emitter<AuthState> emit,
+  ) async {
     emit(const AuthLogoutInProgress());
 
     final result = await logout(NoParams());

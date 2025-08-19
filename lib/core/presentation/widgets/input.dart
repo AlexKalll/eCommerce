@@ -42,11 +42,10 @@ class Input extends StatelessWidget {
           decoration: InputDecoration(
             border: const OutlineInputBorder(
               borderRadius: BorderRadius.all(Radius.circular(10)),
-              borderSide: BorderSide.none,
             ),
             hintText: hint,
             hintStyle: const TextStyle(color: Colors.grey),
-            fillColor: Colors.grey[200],
+            fillColor: Colors.white,
             filled: true,
             contentPadding: EdgeInsets.symmetric(
                 vertical: isMultiline ? 10 : 2, horizontal: 10),

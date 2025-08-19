@@ -4,16 +4,23 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'bloc_observer.dart';
 import 'core/presentation/routes/router.dart';
 import 'features/auth/presentation/bloc/auth_bloc.dart';
+import 'features/chat/presentation/bloc/chat/chat_bloc.dart';
 import 'features/product/presentation/bloc/product/product_bloc.dart';
 import 'injection_container.dart' as di;
 
 Future<void> main() async {
+  print('🚀 Starting Flutter app...');
   WidgetsFlutterBinding.ensureInitialized();
+  print('✅ Flutter binding initialized');
 
   Bloc.observer = SimpleBlocObserver();
+  print('✅ Bloc observer set');
 
+  print('🔧 Initializing dependency injection...');
   await di.init();
+  print('✅ Dependency injection completed');
 
+  print('🎯 Running app...');
   runApp(const App());
 }
 
@@ -28,9 +35,13 @@ class App extends StatelessWidget {
           create: (context) =>
               di.serviceLocator<ProductsBloc>()..add(ProductsLoadRequested()),
         ),
-        BlocProvider(
+        BlocProvider<AuthBloc>(
           create: (context) =>
               di.serviceLocator<AuthBloc>()..add(const AuthLoadRequested()),
+        ),
+        BlocProvider<ChatsBloc>(
+          create: (context) =>
+              di.serviceLocator<ChatsBloc>()..add(ChatsLoadRequested()),
         ),
       ],
       child: MaterialApp.router(
@@ -54,30 +65,12 @@ class App extends StatelessWidget {
           //! Font
           fontFamily: 'Poppins',
           textTheme: const TextTheme(
-            titleSmall: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w500,
-            ),
-            titleMedium: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w500,
-            ),
-            titleLarge: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.w500,
-            ),
-            bodySmall: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w400,
-            ),
-            bodyMedium: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w400,
-            ),
-            bodyLarge: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w400,
-            ),
+            titleSmall: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+            titleMedium: TextStyle(fontSize: 18, fontWeight: FontWeight.w500),
+            titleLarge: TextStyle(fontSize: 20, fontWeight: FontWeight.w500),
+            bodySmall: TextStyle(fontSize: 14, fontWeight: FontWeight.w400),
+            bodyMedium: TextStyle(fontSize: 16, fontWeight: FontWeight.w400),
+            bodyLarge: TextStyle(fontSize: 18, fontWeight: FontWeight.w400),
           ),
         ),
 

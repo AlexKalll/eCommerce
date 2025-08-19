@@ -13,10 +13,7 @@ class UploadFile extends Equatable {
   final String key;
   final String path;
 
-  const UploadFile({
-    required this.key,
-    required this.path,
-  });
+  const UploadFile({required this.key, required this.path});
 
   @override
   List<Object> get props => [key, path];
@@ -31,8 +28,11 @@ class HttpResponse extends Equatable {
   final int statusCode;
   final String body;
 
-  const HttpResponse(
-      {this.reasonPhrase = '', required this.statusCode, required this.body});
+  const HttpResponse({
+    this.reasonPhrase = '',
+    required this.statusCode,
+    required this.body,
+  });
 
   @override
   List<Object> get props => [reasonPhrase, statusCode, body];
@@ -41,75 +41,77 @@ class HttpResponse extends Equatable {
 class HttpClient {
   final http.Client client;
   final http.MultipartRequest Function(HttpMethod, String)
-      multipartRequestFactory;
+  multipartRequestFactory;
 
   io.Socket? _socket;
 
-  final _defaultHeaders = {
-    'Content-Type': 'application/json; charset=UTF-8',
-  };
+  final _defaultHeaders = {'Content-Type': 'application/json; charset=UTF-8'};
 
-  HttpClient({
-    required this.multipartRequestFactory,
-    required this.client,
-  });
+  HttpClient({required this.multipartRequestFactory, required this.client});
 
   set authToken(String token) {
     _defaultHeaders['Authorization'] = 'Bearer $token';
     _socket = io.io(socketUrl, <String, dynamic>{
       'autoConnect': false,
       'transports': ['websocket'],
-      'extraHeaders': <String, String>{
-        'authorization': 'Bearer $token',
-      },
+      'extraHeaders': <String, String>{'authorization': 'Bearer $token'},
     });
   }
 
   io.Socket get socket => _socket!;
 
   Future<HttpResponse> get(String url) async {
-    final response = await client.get(Uri.parse(url), headers: _defaultHeaders);
+    final response = await client
+        .get(Uri.parse(url), headers: _defaultHeaders)
+        .timeout(
+          connectionTimeout,
+          onTimeout: () => throw TimeoutException('Request timed out'),
+        );
 
-    return HttpResponse(
-      statusCode: response.statusCode,
-      body: response.body,
-    );
+    return HttpResponse(statusCode: response.statusCode, body: response.body);
   }
 
   Future<HttpResponse> post(String url, Map<String, dynamic> body) async {
-    final response = await client.post(
-      Uri.parse(url),
-      body: jsonEncode(body),
-      headers: _defaultHeaders,
-    );
+    print('📡 HTTP POST request to: $url');
+    print('📦 Request body: $body');
+    print('📋 Request headers: $_defaultHeaders');
 
-    return HttpResponse(
-      statusCode: response.statusCode,
-      body: response.body,
-    );
+    final response = await client
+        .post(Uri.parse(url), body: jsonEncode(body), headers: _defaultHeaders)
+        .timeout(
+          connectionTimeout,
+          onTimeout: () {
+            print('⏰ POST request timed out for: $url');
+            throw TimeoutException('Request timed out');
+          },
+        );
+
+    print('📥 Response status: ${response.statusCode}');
+    print('📥 Response body: ${response.body}');
+
+    return HttpResponse(statusCode: response.statusCode, body: response.body);
   }
 
   Future<HttpResponse> put(String url, Map<String, dynamic> body) async {
-    final response = await client.put(
-      Uri.parse(url),
-      body: jsonEncode(body),
-      headers: _defaultHeaders,
-    );
+    final response = await client
+        .put(Uri.parse(url), body: jsonEncode(body), headers: _defaultHeaders)
+        .timeout(
+          connectionTimeout,
+          onTimeout: () => throw TimeoutException('Request timed out'),
+        );
 
-    return HttpResponse(
-      statusCode: response.statusCode,
-      body: response.body,
-    );
+    return HttpResponse(statusCode: response.statusCode, body: response.body);
   }
 
   Future<HttpResponse> delete(String url) async {
-    final response =
-        await client.delete(Uri.parse(url), headers: _defaultHeaders);
+    final response = await client
+        .delete(Uri.parse(url), headers: _defaultHeaders)
+        .timeout(
+          connectionTimeout,
+          onTimeout: () => throw TimeoutException('Request timed out'),
+        );
 
-    return HttpResponse(
-      statusCode: response.statusCode,
-      body: response.body,
-    );
+    return HttpResponse(statusCode: response.statusCode, body: response.body);
   }
 
   Future<HttpResponse> uploadFile(
@@ -125,14 +127,19 @@ class HttpClient {
     request.fields.addAll(body);
 
     for (var file in files) {
-      request.files.add(await http.MultipartFile.fromPath(
-        file.key,
-        file.path,
-        contentType: _inferMediaType(file.path),
-      ));
+      request.files.add(
+        await http.MultipartFile.fromPath(
+          file.key,
+          file.path,
+          contentType: _inferMediaType(file.path),
+        ),
+      );
     }
 
-    http.StreamedResponse streamedResponse = await request.send();
+    http.StreamedResponse streamedResponse = await request.send().timeout(
+      connectionTimeout,
+      onTimeout: () => throw TimeoutException('Request timed out'),
+    );
 
     final response = await streamedResponse.stream.bytesToString();
     return HttpResponse(
@@ -153,4 +160,12 @@ class HttpClient {
       return MediaType('image', 'jpeg');
     }
   }
+}
+
+class TimeoutException implements Exception {
+  final String message;
+  TimeoutException(this.message);
+
+  @override
+  String toString() => 'TimeoutException: $message';
 }

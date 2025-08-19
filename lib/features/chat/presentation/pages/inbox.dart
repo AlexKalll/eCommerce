@@ -28,31 +28,102 @@ class ChatInboxPage extends StatelessWidget {
       },
       child: Scaffold(
         appBar: AppBar(
-          title: Text('Inbox ${chat.user1.name} <> ${chat.user2.name}'),
+          title: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Chat with ${_getOtherUserName()}'),
+              Text(
+                'Tap to send messages',
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.normal,
+                  color: Colors.grey.shade600,
+                ),
+              ),
+            ],
+          ),
         ),
         body: SafeArea(
           child: Padding(
             padding: const EdgeInsets.fromLTRB(18, 18, 18, 0),
             child: Column(
               children: [
+                // Chat Info Card
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.green.shade50,
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: Colors.green.shade200),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.chat_bubble_outline,
+                        color: Colors.green.shade700,
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          'You are chatting with ${_getOtherUserName()}. Type your message below and tap send.',
+                          style: TextStyle(
+                            color: Colors.green.shade700,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 16),
+
                 // Message List
                 Expanded(
                   child: BlocBuilder<MessageBloc, MessageState>(
                     builder: (context, state) {
+                      if (state.messages.isEmpty) {
+                        return Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.message_outlined,
+                                size: 64,
+                                color: Colors.grey.shade400,
+                              ),
+                              const SizedBox(height: 16),
+                              Text(
+                                'No messages yet',
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  color: Colors.grey.shade600,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                'Start the conversation by sending a message',
+                                style: TextStyle(color: Colors.grey.shade500),
+                                textAlign: TextAlign.center,
+                              ),
+                            ],
+                          ),
+                        );
+                      }
+
                       return RefreshIndicator(
                         onRefresh: () async {
-                          context
-                              .read<MessageBloc>()
-                              .add(MessageSocketConnectionRequested(chat));
+                          context.read<MessageBloc>().add(
+                            MessageSocketConnectionRequested(chat),
+                          );
                         },
                         child: ListView.builder(
                           itemCount: state.messages.length,
                           itemBuilder: (context, index) {
                             final message = state.messages[index];
 
-                            return MessageCard(
-                              message: message,
-                            );
+                            return MessageCard(message: message);
                           },
                         ),
                       );
@@ -61,25 +132,49 @@ class ChatInboxPage extends StatelessWidget {
                 ),
 
                 // Message Input
-                TextField(
-                  controller: _messageController,
-                  decoration: InputDecoration(
-                    hintText: 'Type a message',
-                    suffixIcon: IconButton(
-                      onPressed: () {
-                        context.read<MessageBloc>().add(
-                              MessageSent(
-                                chat,
-                                _messageController.text,
-                                'text',
-                              ),
-                            );
-                      },
-                      icon: const Icon(
-                        Icons.send,
-                        color: Colors.indigoAccent,
+                Container(
+                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(25),
+                    border: Border.all(color: Colors.grey.shade300),
+                  ),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: TextField(
+                          controller: _messageController,
+                          decoration: const InputDecoration(
+                            hintText: 'Type a message...',
+                            border: InputBorder.none,
+                            contentPadding: EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 12,
+                            ),
+                          ),
+                          maxLines: null,
+                        ),
                       ),
-                    ),
+                      IconButton(
+                        onPressed: _messageController.text.trim().isEmpty
+                            ? null
+                            : () {
+                                context.read<MessageBloc>().add(
+                                  MessageSent(
+                                    chat,
+                                    _messageController.text.trim(),
+                                    'text',
+                                  ),
+                                );
+                              },
+                        icon: Icon(
+                          Icons.send,
+                          color: _messageController.text.trim().isEmpty
+                              ? Colors.grey.shade400
+                              : Theme.of(context).primaryColor,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ],
@@ -88,5 +183,11 @@ class ChatInboxPage extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  String _getOtherUserName() {
+    // This is a simplified version - in a real app, you'd get the current user's ID
+    // and show the other user's name
+    return '${chat.user1.name} & ${chat.user2.name}';
   }
 }

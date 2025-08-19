@@ -11,4 +11,5 @@ class Routes {
 
   static const chats = '/chats';
   static const chatInbox = '/chat-inbox';
+  static const startChat = '/start-chat';
 }
