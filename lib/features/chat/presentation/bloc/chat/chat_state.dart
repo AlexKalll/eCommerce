@@ -6,7 +6,7 @@ sealed class ChatsState extends Equatable {
   const ChatsState(this.chats);
 
   @override
-  List<Object> get props => [];
+  List<Object> get props => [chats];
 }
 
 class ChatsInitial extends ChatsState {
@@ -29,6 +29,9 @@ class ChatsInitiateSuccess extends ChatsState {
   final Chat addedChat;
 
   const ChatsInitiateSuccess(this.addedChat, super.chats);
+
+  @override
+  List<Object> get props => [addedChat, chats];
 }
 
 class ChatsDeleteInProgress extends ChatsState {
@@ -39,10 +42,16 @@ class ChatsDeleteSuccess extends ChatsState {
   final String deletedChatName;
 
   const ChatsDeleteSuccess(this.deletedChatName, super.chats);
+
+  @override
+  List<Object> get props => [deletedChatName, chats];
 }
 
 class ChatsFailure extends ChatsState {
   final String message;
 
   const ChatsFailure(this.message, super.chats);
+
+  @override
+  List<Object> get props => [message, chats];
 }

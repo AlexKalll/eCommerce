@@ -18,9 +18,8 @@ class ChatRemoteDataSourceImpl extends ChatRemoteDataSource {
 
   StreamSocket streamSocket = StreamSocket();
 
-  ChatRemoteDataSourceImpl({
-    required this.client,
-  }) : _baseUrl = '$baseUrl/chats';
+  ChatRemoteDataSourceImpl({required this.client})
+    : _baseUrl = 'https://g5-flutter-learning-path-be-tvum.onrender.com/api/v3/chats';
 
   @override
   Future<void> deleteChat(String id) async {
@@ -40,6 +39,7 @@ class ChatRemoteDataSourceImpl extends ChatRemoteDataSource {
     streamSocket.dispose();
     streamSocket = StreamSocket();
 
+    // Load initial messages
     client.get('$_baseUrl/$id/messages').then((response) {
       if (response.statusCode == 200) {
         final List<dynamic> messages = jsonDecode(response.body)['data'];
@@ -52,14 +52,29 @@ class ChatRemoteDataSourceImpl extends ChatRemoteDataSource {
       }
     });
 
+    // Ensure a clean socket state, then connect and join the room
+    try {
+      client.socket.off('connect');
+      client.socket.off('disconnect');
+      client.socket.off('connect_error');
+      client.socket.off('message:delivered');
+      client.socket.off('message:received');
+    } catch (_) {}
+
     client.socket.connect();
 
     client.socket.onConnect((_) {
       log('Connected to the socket server');
+      // Join the chat room to receive live updates for this chat
+      client.socket.emit('chat:join', {'chatId': id});
     });
 
     client.socket.onDisconnect((_) {
       log('Disconnected from the socket server');
+    });
+
+    client.socket.on('connect_error', (data) {
+      log('Socket connect_error: $data');
     });
 
     client.socket.on('message:delivered', (data) {
@@ -78,9 +93,7 @@ class ChatRemoteDataSourceImpl extends ChatRemoteDataSource {
   @override
   Future<ChatModel> getOrCreateChat(UserModel receiver) async {
     try {
-      final response = await client.post(_baseUrl, {
-        'userId': receiver.id,
-      });
+      final response = await client.post(_baseUrl, {'userId': receiver.id});
 
       if (response.statusCode == 200) {
         return ChatModel.fromJson(jsonDecode(response.body)['data']);

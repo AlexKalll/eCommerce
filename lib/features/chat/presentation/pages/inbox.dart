@@ -7,15 +7,34 @@ import '../bloc/message/message_bloc.dart';
 
 import '../widgets/message_card.dart';
 
-class ChatInboxPage extends StatelessWidget {
-  final TextEditingController _messageController = TextEditingController();
+class ChatInboxPage extends StatefulWidget {
   final Chat chat;
-  ChatInboxPage({super.key, required this.chat});
+  const ChatInboxPage({super.key, required this.chat});
+
+  @override
+  State<ChatInboxPage> createState() => _ChatInboxPageState();
+}
+
+class _ChatInboxPageState extends State<ChatInboxPage> {
+  final TextEditingController _messageController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    context.read<MessageBloc>().add(
+      MessageSocketConnectionRequested(widget.chat),
+    );
+    _messageController.addListener(() => setState(() {}));
+  }
+
+  @override
+  void dispose() {
+    _messageController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
-    context.read<MessageBloc>().add(MessageSocketConnectionRequested(chat));
-
     return BlocListener<MessageBloc, MessageState>(
       listener: (context, state) {
         if (state is MessageLoadFailure) {
@@ -115,7 +134,7 @@ class ChatInboxPage extends StatelessWidget {
                       return RefreshIndicator(
                         onRefresh: () async {
                           context.read<MessageBloc>().add(
-                            MessageSocketConnectionRequested(chat),
+                            MessageSocketConnectionRequested(widget.chat),
                           );
                         },
                         child: ListView.builder(
@@ -161,7 +180,7 @@ class ChatInboxPage extends StatelessWidget {
                             : () {
                                 context.read<MessageBloc>().add(
                                   MessageSent(
-                                    chat,
+                                    widget.chat,
                                     _messageController.text.trim(),
                                     'text',
                                   ),
@@ -186,8 +205,6 @@ class ChatInboxPage extends StatelessWidget {
   }
 
   String _getOtherUserName() {
-    // This is a simplified version - in a real app, you'd get the current user's ID
-    // and show the other user's name
-    return '${chat.user1.name} & ${chat.user2.name}';
+    return '${widget.chat.user1.name} & ${widget.chat.user2.name}';
   }
 }

@@ -15,16 +15,16 @@ class ChatsBloc extends Bloc<ChatsEvent, ChatsState> {
   final GetMyChats getMyChats;
   final InitiateChat initiateChat;
 
-  ChatsBloc({
-    required this.getMyChats,
-    required this.initiateChat,
-  }) : super(const ChatsInitial([])) {
+  ChatsBloc({required this.getMyChats, required this.initiateChat})
+    : super(const ChatsInitial([])) {
     on<ChatsLoadRequested>(_onLoadChatsRequested);
     on<ChatsChatInitiated>(_onChatAdded);
   }
 
   Future<void> _onLoadChatsRequested(
-      ChatsLoadRequested event, Emitter<ChatsState> emit) async {
+    ChatsLoadRequested event,
+    Emitter<ChatsState> emit,
+  ) async {
     emit(ChatsLoadInProgress(state.chats));
 
     final chats = await getMyChats(NoParams());
@@ -36,14 +36,25 @@ class ChatsBloc extends Bloc<ChatsEvent, ChatsState> {
   }
 
   Future<void> _onChatAdded(
-      ChatsChatInitiated event, Emitter<ChatsState> emit) async {
+    ChatsChatInitiated event,
+    Emitter<ChatsState> emit,
+  ) async {
     emit(ChatsInitiateInProgress(state.chats));
 
     final result = await initiateChat(InitiateChatParams(event.receiver));
 
-    result.fold(
-      (failure) => emit(ChatsFailure(failure.message, state.chats)),
-      (chat) => emit(ChatsInitiateSuccess(chat, state.chats)),
-    );
+    result.fold((failure) => emit(ChatsFailure(failure.message, state.chats)), (
+      chat,
+    ) {
+      final updated = [...state.chats];
+      final exists = updated.indexWhere((c) => c.id == chat.id);
+      if (exists == -1) {
+        updated.insert(0, chat);
+      } else {
+        updated[exists] = chat;
+      }
+      emit(ChatsInitiateSuccess(chat, updated));
+      emit(ChatsLoadSuccess(updated));
+    });
   }
 }
